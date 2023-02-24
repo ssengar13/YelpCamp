@@ -15,7 +15,9 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user");
 const helmet = require("helmet");
+const MongoStore = require("connect-mongo");
 const mongoSanitize = require("express-mongo-sanitize");
+// const dbUrl = process.env.DB_URL;
 
 const userRoutes = require("./routes/users");
 const campgroundRoutes = require("./routes/campgrounds");
@@ -49,7 +51,21 @@ app.use(
   })
 );
 
+// const store = new MongoStore({
+//   url: "mongodb://127.0.0.1:27017/yelp-camp",
+//   secret: "thisshouldbeabettersecret!",
+//   touchAfter: 24 * 60 * 60,
+// })
+
+// store.on("error", function (e) {
+//   console.log("SESSION STORE ERROR", e);
+// });
+
 const sessionConfig = {
+  store: MongoStore.create({
+    mongoUrl: "mongodb://127.0.0.1:27017/yelp-camp",
+    touchAfter: 24 * 60 * 60,
+  }),
   name: "session",
   secret: "thisshouldbeabettersecret!",
   resave: false,
@@ -61,6 +77,10 @@ const sessionConfig = {
     maxAge: 1000 * 60 * 60 * 24 * 7,
   },
 };
+sessionConfig.store.on("error", function (e) {
+  console.log("SESSION STORE ERROR", e);
+});
+
 app.use(session(sessionConfig));
 app.use(flash());
 // app.use(helmet());
@@ -97,22 +117,22 @@ const connectSrcUrls = [
 const fontSrcUrls = [];
 app.use(
   helmet.contentSecurityPolicy({
-      directives: {
-          defaultSrc: [],
-          connectSrc: ["'self'", ...connectSrcUrls],
-          scriptSrc: ["'unsafe-inline'", "'self'", ...scriptSrcUrls],
-          styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
-          workerSrc: ["'self'", "blob:"],
-          objectSrc: [],
-          imgSrc: [
-              "'self'",
-              "blob:",
-              "data:",
-              "https://res.cloudinary.com/dsqmxw57a/", //SHOULD MATCH YOUR CLOUDINARY ACCOUNT!
-              "https://images.unsplash.com/",
-          ],
-          fontSrc: ["'self'", ...fontSrcUrls],
-      },
+    directives: {
+      defaultSrc: [],
+      connectSrc: ["'self'", ...connectSrcUrls],
+      scriptSrc: ["'unsafe-inline'", "'self'", ...scriptSrcUrls],
+      styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
+      workerSrc: ["'self'", "blob:"],
+      objectSrc: [],
+      imgSrc: [
+        "'self'",
+        "blob:",
+        "data:",
+        "https://res.cloudinary.com/dsqmxw57a/", //SHOULD MATCH YOUR CLOUDINARY ACCOUNT!
+        "https://images.unsplash.com/",
+      ],
+      fontSrc: ["'self'", ...fontSrcUrls],
+    },
   })
 );
 
